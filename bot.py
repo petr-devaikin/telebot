@@ -23,14 +23,15 @@ logger = logging.getLogger(__name__)
 
 def start(bot, update):
     bot.sendMessage(update.message.chat_id, text='Hi! Send me a color and a logo of the candy or just a logo. ' +
-        'For ex. "green candy", "blue northface"')
+        'For example, "green candy", "blue northface" or just "coca-cola"')
 
 
 def help(bot, update):
-    bot.sendMessage(update.message.chat_id, text='Help!')
+    bot.sendMessage(update.message.chat_id, text='Send a color and a logo (or just a name) ' +
+        'of the candy you whan to get info about')
 
 def getWords(text):
-    return re.compile('\w+').findall(text)
+    return re.compile('[\w-]+').findall(text)
 
 @run_async
 def search(bot, update, **kwargs):
@@ -55,7 +56,11 @@ def search(bot, update, **kwargs):
         msg = ('Looking for %s' % logo)
         if color:
             msg += ' (%s color)' % color
+        msg += '. Wait a few seconds pls...'
+
+        # send wait message
         bot.sendMessage(update.message.chat_id, text=msg)
+        bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
 
         params = {
             'page': 'search_reports',
@@ -65,17 +70,18 @@ def search(bot, update, **kwargs):
             'colour': color,
             'region': 'all',
             'percent_rating': 0,
-            'pp': 10,
+            'pp': 6,
             'submit.x': 75,
             'submit.y': 18,
             'submit': 'Search Reports'
         }
 
-        bot.sendChatAction(chat_id=update.message.chat_id, action=telegram.ChatAction.TYPING)
+        full_url = URI + urllib.urlencode(params)
+
 
         cj = cookielib.CookieJar()
         opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
-        page = opener.open(URI + urllib.urlencode(params))
+        page = opener.open(full_url)
         page.addheaders = [('User-agent', 'Mozilla/5.0')]
 
         content = page.read()
@@ -84,11 +90,12 @@ def search(bot, update, **kwargs):
         #items = []
 
         if len(items) == 0:
-            bot.sendMessage(update.message.chat_id, text='Cannot find anything relevant')
+            bot.sendMessage(update.message.chat_id, text='Cannot find anything relevant. ' +
+                'Try again in format color + logo or just logo')
         else:
-            for item in items:
-                text = ''
+            bot.sendMessage(update.message.chat_id, text='That\'s what I found:')
 
+            for idx, item in enumerate(items[:5]):
                 header = item[0][0]
                 description = item[0][1]
 
@@ -96,26 +103,62 @@ def search(bot, update, **kwargs):
                 href = PREFIX + header_links[0].get('href')
                 name = header_links[0][0].text
 
-                text += '<a href="%s">%s</a> ' % (href, name)
+                # send name
+                bot.sendMessage(
+                    update.message.chat_id,
+                    text='<a href="%s">%d. %s</a>' % (href, 1 + idx, name.upper()),
+                    parse_mode=telegram.ParseMode.HTML)
+
+
+                text = ''
 
                 meta = pq(item)('table table td')
 
                 img = pq(meta[0])('img')
-
-                for m in meta[1:]:
-                    key = re.sub(' +',' ', m[0].text.strip())
-                    value = re.sub(' +',' ', m[1].text.strip())
-                    if value:
-                        text += '%s %s; ' % (key, value)
-
                 if img:
-                    img = PREFIX + img[0].get('src')
+                    img = PREFIX + img[0].get('src').replace('thumbnails', 'fullsize')
                     #text += 'img: ' + img
-                    bot.sendPhoto(chat_id=update.message.chat_id, photo=img)
-                else:
-                    img = None
 
-                bot.sendMessage(update.message.chat_id, text=text, parse_mode=telegram.ParseMode.HTML)
+                    # send photo
+                    bot.sendPhoto(chat_id=update.message.chat_id, photo=img)
+
+
+                logo = meta[1][1].text.strip() #
+                location = meta[2][1].text.strip()
+                color = meta[3][1].text.strip() #
+                tested = meta[4][1].text.strip()
+                shape = meta[5][1].text.strip() #
+                content = meta[6][1].text.strip() #
+                report_quality = meta[7][1].text.strip()
+                rating = meta[8][1].text.strip() #
+                warning = meta[9][1].text.strip() #
+
+
+                text += ('%s <strong>WARNING</strong> %s\n' % (telegram.Emoji.WARNING_SIGN, telegram.Emoji.WARNING_SIGN)) if warning == 'yes' else ''
+                text += '%s<strong>%s (%s)</strong>. ' % (telegram.Emoji.SMILING_FACE_WITH_SUNGLASSES, content.title(), rating)
+                text += ('%s Tested\n' % telegram.Emoji.OK_HAND_SIGN) if tested == 'yes' else 'Not tested\n'
+                text += (color.title() + ' ') if color else ''
+                text += ('%s%s (%s)\n' % (telegram.Emoji.PILL, logo.title(), shape)) if shape else ('%s\n' % logo.title())
+                text += '%s%s\n' % (telegram.Emoji.ROUND_PUSHPIN, location)
+                text += '<a href="%s">More information</a>' % href
+
+                # send description
+                bot.sendMessage(
+                    update.message.chat_id,
+                    text=text,
+                    parse_mode=telegram.ParseMode.HTML)
+
+            if len(items) > 5:
+                bot.sendMessage(
+                    update.message.chat_id,
+                    text='For more information you can <a href="%s">check the full list</a>' % full_url,
+                    parse_mode=telegram.ParseMode.HTML)
+
+            bot.sendMessage(
+                update.message.chat_id,
+                text='Anything else? ' +
+                    telegram.Emoji.WHITE_RIGHT_POINTING_BACKHAND_INDEX +
+                    telegram.Emoji.WHITE_RIGHT_POINTING_BACKHAND_INDEX)
 
 
 def error(bot, update, error):
