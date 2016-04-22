@@ -131,15 +131,15 @@ def search(bot, update, **kwargs):
                     bot.sendPhoto(chat_id=update.message.chat_id, photo=img)
 
 
-                logo = meta[1][1].text.strip() #
-                location = meta[2][1].text.strip()
-                color = meta[3][1].text.strip() #
-                tested = meta[4][1].text.strip()
-                shape = meta[5][1].text.strip() #
-                content = meta[6][1].text.strip() #
-                report_quality = meta[7][1].text.strip()
-                rating = meta[8][1].text.strip() #
-                warning = meta[9][1].text.strip() #
+                logo = meta[1][1].text.strip().encode('utf-8') #
+                location = meta[2][1].text.strip().encode('utf-8')
+                color = meta[3][1].text.strip().encode('utf-8') #
+                tested = meta[4][1].text.strip().encode('utf-8')
+                shape = meta[5][1].text.strip().encode('utf-8') #
+                content = meta[6][1].text.strip().encode('utf-8') #
+                report_quality = meta[7][1].text.strip().encode('utf-8')
+                rating = meta[8][1].text.strip().encode('utf-8') #
+                warning = meta[9][1].text.strip().encode('utf-8') #
 
 
                 text += ('%s <strong>WARNING</strong> %s\n' % (telegram.Emoji.WARNING_SIGN, telegram.Emoji.WARNING_SIGN)) if warning == 'yes' else ''
