@@ -103,10 +103,10 @@ def search(bot, update, **kwargs):
                 img = pq(meta[0])('img')
 
                 for m in meta[1:]:
-                    key = re.sub(' +',' ',m[0].text.strip())
-                    value = re.sub(' +',' ',m[1].text.strip())
+                    key = re.sub(' +',' ', m[0].text.strip())
+                    value = re.sub(' +',' ', m[1].text.strip())
                     if value:
-                        text += '%s %s; ' % (m[0].text.strip(), m[1].text.strip())
+                        text += '%s %s; ' % (key, value)
 
                 if img:
                     img = PREFIX + img[0].get('src')
