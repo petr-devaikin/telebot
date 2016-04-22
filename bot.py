@@ -1,4 +1,5 @@
 from telegram.ext import Updater
+from telegram.ext.dispatcher import run_async
 import telegram
 import logging
 import re
@@ -10,6 +11,7 @@ import urllib
 
 COLORS = ['white', 'black', 'gray', 'grey', 'red', 'pink', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown']
 URI = 'http://www.pillreports.net/index.php?'
+PREFIX = 'http://www.pillreports.net/'
 
 
 logging.basicConfig(
@@ -30,8 +32,8 @@ def help(bot, update):
 def getWords(text):
     return re.compile('\w+').findall(text)
 
-
-def search(bot, update):
+@run_async
+def search(bot, update, **kwargs):
     words = getWords(update.message.text)
 
     color = ''
@@ -81,12 +83,39 @@ def search(bot, update):
         items = doc('.contentBlock table.td_chromed')
         #items = []
 
-        for item in items:
-            itemContent = pq(item)
-            header = itemContent('.textLargeBlue')
-            logger.warn(header.html())
+        if len(items) == 0:
+            bot.sendMessage(update.message.chat_id, text='Cannot find anything relevant')
+        else:
+            for item in items:
+                text = ''
 
-        bot.sendMessage(update.message.chat_id, text='Color: %s, Logo: %s, Found: %d' % (color, logo, len(items)))
+                header = item[0][0]
+                description = item[0][1]
+
+                header_links = pq(header)('a')
+                href = PREFIX + header_links[0].get('href')
+                name = header_links[0][0].text
+
+                text += '<a href="%s">%s</a> ' % (href, name)
+
+                meta = pq(item)('table table td')
+
+                img = pq(meta[0])('img')
+
+                for m in meta[1:]:
+                    key = re.sub(' +',' ',m[0].text.strip())
+                    value = re.sub(' +',' ',m[1].text.strip())
+                    if value:
+                        text += '%s %s; ' % (m[0].text.strip(), m[1].text.strip())
+
+                if img:
+                    img = PREFIX + img[0].get('src')
+                    #text += 'img: ' + img
+                    bot.sendPhoto(chat_id=update.message.chat_id, photo=img)
+                else:
+                    img = None
+
+                bot.sendMessage(update.message.chat_id, text=text, parse_mode=telegram.ParseMode.HTML)
 
 
 def error(bot, update, error):
