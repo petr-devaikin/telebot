@@ -7,11 +7,15 @@ from lxml import html
 from pyquery import PyQuery as pq
 import cookielib, urllib2, sys
 import urllib
+import botan
 
 
 COLORS = ['white', 'black', 'gray', 'grey', 'red', 'pink', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown']
 URI = 'http://www.pillreports.net/index.php?'
 PREFIX = 'http://www.pillreports.net/'
+
+TOKEN = '196843169:AAHMi5qHiNCpMK4uhGQZff2qKpsm-pox72c'
+STAT_TOKEN = 'uhABpOJHJfyb3ZR9hDxhtEzf4oUmqFMD'
 
 
 logging.basicConfig(
@@ -35,6 +39,8 @@ def getWords(text):
 
 @run_async
 def search(bot, update, **kwargs):
+    botan.track(STAT_TOKEN, update.message.from_user, update.message.to_dict(), 'info request')
+
     words = getWords(update.message.text)
 
     color = ''
@@ -135,10 +141,11 @@ def search(bot, update, **kwargs):
 
 
                 text += ('%s <strong>WARNING</strong> %s\n' % (telegram.Emoji.WARNING_SIGN, telegram.Emoji.WARNING_SIGN)) if warning == 'yes' else ''
-                text += '%s<strong>%s (%s)</strong>. ' % (telegram.Emoji.SMILING_FACE_WITH_SUNGLASSES, content.title(), rating)
-                text += ('%s Tested\n' % telegram.Emoji.OK_HAND_SIGN) if tested == 'yes' else 'Not tested\n'
+                text += '<strong>%s - %s</strong> ' % (content.title(), rating)
+                text += '(tested)\n' if tested == 'yes' else '(not tested)\n'
+                text += telegram.Emoji.PILL + ' '
                 text += (color.title() + ' ') if color else ''
-                text += ('%s%s (%s)\n' % (telegram.Emoji.PILL, logo.title(), shape)) if shape else ('%s\n' % logo.title())
+                text += ('%s (%s)\n' % (logo.title(), shape)) if shape else ('%s\n' % logo.title())
                 text += '%s%s\n' % (telegram.Emoji.ROUND_PUSHPIN, location)
                 text += '<a href="%s">More information</a>' % href
 
@@ -166,7 +173,7 @@ def error(bot, update, error):
 
 
 def main():
-    updater = Updater("196843169:AAHMi5qHiNCpMK4uhGQZff2qKpsm-pox72c")
+    updater = Updater(TOKEN)
 
     dp = updater.dispatcher
 
