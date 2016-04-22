@@ -8,14 +8,16 @@ from pyquery import PyQuery as pq
 import cookielib, urllib2, sys
 import urllib
 import botan
+import os
 
 
 COLORS = ['white', 'black', 'gray', 'grey', 'red', 'pink', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown']
-URI = 'http://www.pillreports.net/index.php?'
-PREFIX = 'http://www.pillreports.net/'
 
-TOKEN = '196843169:AAHMi5qHiNCpMK4uhGQZff2qKpsm-pox72c'
-STAT_TOKEN = 'uhABpOJHJfyb3ZR9hDxhtEzf4oUmqFMD'
+PREFIX = os.environ.get('BOT_PREFIX')
+URI = PREFIX + 'index.php?'
+
+TOKEN = os.environ.get('BOT_TOKEN')
+STAT_TOKEN = os.environ.get('BOT_STAT_TOKEN')
 
 
 logging.basicConfig(
