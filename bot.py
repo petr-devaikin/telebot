@@ -24,8 +24,8 @@ STAT_TOKEN = os.environ.get('BOT_STAT_TOKEN')
 MESSAGES = {
     'hello': 'Hi! Send me a color and a logo of the candy or just a logo. ' +
              'For example, "green candy", "blue northface" or just "coca-cola"',
-    'help': 'Send a color and a logo (or just a name) ' +
-            'of the candy you whan to get info about',
+    'help': 'Send a color and a logo (or just a logo) ' +
+            'of the candy you whant to get info about',
     'notrecognized': 'Sorry what? Send me a color and a logo of the candy or just a logo. ' +
                 'For ex. "green candy", "blue northface"',
     'notfound': 'Cannot find anything relevant. ' +
